@@ -8,10 +8,10 @@ library(reshape2)
 library(stringr)
 library(tidyr)
 
-obj <- synGet("syn5579744")
-d <- fread(getFileLocation(obj), data.table=FALSE)
+obj.tf_mirna <- synGet("syn5579744")
+d.tf_mirna <- fread(getFileLocation(obj.tf_mirna), data.table=FALSE)
 
-diffStates <- d %>% select(Comparison) %>% 
+diffStates <- d.tf_mirna %>% select(Comparison) %>% 
   mutate(Comparison=str_replace(Comparison, "_vs_", "_")) %>% 
   tidyr::separate(Comparison, c("first", "second")) %>% 
   name_rows() %>% 
@@ -20,7 +20,7 @@ diffStates <- d %>% select(Comparison) %>%
   distinct()
 diffStates <- diffStates$value
 
-d2 <- d
+d2 <- d.tf_mirna
 
 nodeProperties <- data.frame(group=c("mrna", "mirna"),
                              color=c("#888888", "#FF0000"),
