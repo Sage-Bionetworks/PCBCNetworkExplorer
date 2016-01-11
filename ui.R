@@ -9,50 +9,35 @@ library(shinydashboard)
 
 dashboardPage(
   dashboardHeader(title = "PCBC Network Explorer"),
-  dashboardSidebar(
-    sliderInput("edgeThreshold", "Threshold on edges",
-                min = 0, max = 50, value = 3, step = 0.1
-    ),
-    sidebarMenu(
-      menuItem("Network", tabName = "dashboard"),
-      menuItem("Nodes and edges", tabName = "rawdata")
-    )
-  ),
+  
+  dashboardSidebar(disable = TRUE),
+  
   dashboardBody(
-    # tags$head(tags$script(src="cyjs.js")),
-    
-    tabItems(
-      tabItem("dashboard",
-              fluidRow(
-                valueBoxOutput("threshold"),
-                valueBoxOutput("edges"),
-                valueBoxOutput("nodes")
-              ),
-              fluidRow(
-                box(width=12,
-                  status = "info", solidHeader = TRUE,
-                  title = "Network",
-                  rcytoscapejsOutput("plot", height="600px")
-                )
-              ),
-              fluidRow(
-                box(
-                  width = 6, status = "info", solidHeader = TRUE,
-                  title = "Nodes",
-                  dataTableOutput("nodeDataTable")
-                ),
-                box(
-                  width = 6, status = "info", solidHeader = TRUE,
-                  title = "Edges",
-                  dataTableOutput("edgeDataTable")
-                )
-              )
-              
+    fluidRow(
+      box(
+        width = 5, status = "info", solidHeader = FALSE,
+        
+        h3("Options"),
+        
+        selectInput("diffstate", label='Differentiation State',
+                    choices=diffStates, selectize=TRUE),
+        
+        uiOutput("comparison"),
+        
+        selectInput("layout", label='Layout',
+                    choices=list(`Force directed`="cose", Tree="dagre"), 
+                    selectize=TRUE),
+        
+        tags$hr(),
+        
+        h3("Edges"),
+        
+        DT::dataTableOutput("edgeDataTable")
       ),
-      tabItem("rawdata"
-              # numericInput("maxrows", "Rows to show", 25),
-              # verbatimTextOutput("rawtable"),
-              # downloadButton("downloadCsv", "Download as CSV")
+      box(width=7,
+          status = "info", solidHeader = TRUE,
+          title = "Network",
+          rcytoscapejs::rcytoscapejsOutput("plot", height="500px")
       )
     )
   )

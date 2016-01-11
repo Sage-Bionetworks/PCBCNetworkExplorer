@@ -10,11 +10,21 @@ library(tidyr)
 
 obj <- synGet("syn5579744")
 d <- fread(getFileLocation(obj), data.table=FALSE)
-d2 <- d %>% filter(str_detect(Comparison, "DE"))
+
+diffStates <- d %>% select(Comparison) %>% 
+  mutate(Comparison=str_replace(Comparison, "_vs_", "_")) %>% 
+  tidyr::separate(Comparison, c("first", "second")) %>% 
+  name_rows() %>% 
+  melt(id.vars=".rownames") %>% 
+  select(value) %>% 
+  distinct()
+diffStates <- diffStates$value
+
+d2 <- d
 
 nodeProperties <- data.frame(group=c("mrna", "mirna"),
                              color=c("#888888", "#FF0000"),
-                             shape=c("ellipse", "octagon"))
+                             shape=c("ellipse", "square"))
 
 nodeData <- d2 %>%
   select(mrna, mirna) %>% 
@@ -26,11 +36,8 @@ nodeData <- d2 %>%
   left_join(nodeProperties)
 
 edgeData <- d2 %>% 
-  select(mrna, mirna) %>%
+  select(mrna, mirna, Comparison, changeFishersZ, fdr) %>%
   rename(source=mirna, target=mrna)
-
-id <- nodeData$name
-name <- nodeData$name
 
 network <- edgeData
 

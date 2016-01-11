@@ -6,116 +6,65 @@
 #
 
 library(DT)
+library(rcytoscapejs)
 
 shinyServer(function(input, output, session) {
-  #maxInteractions <-  input$maxInteractions
-  maxInteractions <- 50
+  comparisonReactive <- reactive({
+    tmp <- filter(edgeData, str_detect(Comparison, input$diffstate))
+    return(unique(tmp$Comparison))
+  })  
   
-  # if(nrow(network) <= maxInteractions) {
-  #   maxInteractions <- nrow(network)
-  # } else {
-  #   maxInteractions <- maxInteractions
-  # }
-  
-  # network <- network[1:maxInteractions, ]
-  # 
-  # edgeList <- network[, c("source","target")]
-  # 
-  # nodes <- unique(c(edgeList$source, edgeList$target))
-  # 
-  # id <- nodes
-  # name <- nodes
-  # addLinks <- TRUE
-  # 
-  # if(addLinks) {
-  #   href <- paste0("https://www.google.com/search?q=", nodes)
-  #   tooltip <- paste0("https://www.google.com/search?q=", nodes)
-  #   nodeData <- data.frame(id, name, href, tooltip, stringsAsFactors=FALSE)
-  # } else {
-  #   nodeData <- data.frame(id, name, stringsAsFactors=FALSE)
-  # }
-  # 
-  # nodeData$color <- rep("#888888", nrow(nodeData))
-  # nodeData$color[which(grepl("[a-z]", nodes))] <- "#FF0000"
-  
-  
-  # edgeData <- edgeList
-  
-  # NOTE: Reactive variables used as functions networkReactive()
   networkReactive <- reactive({
-    if(is.null(input$connectedNodes)) {
-      return(network)
-    } else {
-      t1 <- which(network$source %in% input$connectedNodes)
-      t2 <- which(network$target %in% input$connectedNodes)
-      idx <- unique(c(t1, t2))
-      return(network[idx,])
+    comparison <- input$comparison
+
+    if (comparison == "All") {
+      comparisons <- comparisonReactive()
     }
+    else{
+      comparisons <- comparison
+    }
+    
+    print(sprintf("Comparisons in netReact = %s", comparisons))
+    
+    tmp <- filter(edgeData,
+                  # str_detect(Comparison, input$diffstate),
+                  Comparison %in% comparisons)
+    
+    return(tmp)
+  })
+
+  
+  nodeReactive <- reactive({
+    net <- networkReactive()
+    filter(nodeData, name %in% c(net$source, net$target))
   })
   
-  output$nodeDataTable <- DT::renderDataTable({
-    tmp <- nodeData[which(id == input$clickedNode),]
-    print(tmp)
-    DT::datatable(tmp, 
-                  filter=list(position='bottom', clear=FALSE), 
-                  #style='bootstrap',
-                  options=list(pageLength=5))
+  output$comparison <- renderUI({
+    selectInput("comparison", "Comparison", choices=c("All", comparisonReactive()))
   })
   
   output$edgeDataTable <- DT::renderDataTable({
-    DT::datatable(networkReactive(), filter='bottom', 
-                  style='bootstrap', options=list(pageLength=5))
-  })
-  
-  output$clickedNode = renderPrint({
-    input$clickedNode
-  })
-  
-  output$connectedNodes = renderPrint({
-    input$connectedNodes
+    net <- networkReactive()
+    
+    if (!is.null(input$connectedNodes)) {
+      net <- filter(net,
+                    source %in% input$connectedNodes | target %in% input$connectedNodes)
+    }
+    
+    DT::datatable(net,
+                  style='bootstrap', options=list(dom = 'tp', pageLength=5))
   })
   
   output$plot <- renderRcytoscapejs({
-    network <- createCytoscapeJsNetwork(nodeData, edgeData)
-    rcytoscapejs(network$nodes, network$edges)
-    # cyNetwork <- createCytoscapeJsNetwork(nodeData, edgeData)
-    # rcytoscapejs(nodeEntries=cyNetwork$nodes, edgeEntries=cyNetwork$edges)
-  })
-  
-  observeEvent(input$saveImage, {
-    # NOTE: Message cannot be an empty string "", nothing will happen    
-    session$sendCustomMessage(type="saveImage", message="NULL")
-  })
-})
 
-# library(shiny)
-# 
-# shinyServer(function(input, output) {
-# 
-#   output$threshold <- renderValueBox({
-#     
-#     valueBox(
-#       value = formatC(input$edgeThreshold, digits = 1, format = "f"),
-#       subtitle = "Edge threshold",
-#       icon = icon("area-chart"),
-#       color = if (input$edgeThreshold < 25) "yellow" else "red"
-#     )
-#   })
-#   
-#   output$edges <- renderValueBox({
-#     valueBox(
-#       value = edgeCount(),
-#       subtitle = "Unique edges",
-#       icon = icon("info-circle")
-#     )
-#   })
-#   
-#   output$nodes <- renderValueBox({
-#     valueBox(
-#       nodeCount(),
-#       "Unique nodes",
-#       icon = icon("info-circle")
-#     )
-#   })
-#   
-# })
+    edges <- networkReactive()
+    nodes <- nodeReactive()
+    
+    network <- createCytoscapeJsNetwork(nodes, edges)
+
+    rcytoscapejs(network$nodes, network$edges, layout=input$layout, 
+                 height='600px', highlightConnectedNodes=TRUE,
+                 boxSelectionEnabled=TRUE)
+    })
+
+})
