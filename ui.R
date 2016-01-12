@@ -20,10 +20,14 @@ dashboardPage(
         h3("Options"),
         
         selectInput("diffstate", label='Differentiation State',
-                    choices=diffStates, selectize=TRUE),
+                    choices=diffStates, selected="SC", selectize=TRUE),
         
         uiOutput("comparison"),
+
+        sliderInput("fdr", "FDR", min=0, max=0.05, step=0.005, value=0.05, round=TRUE),
         
+        checkboxInput("nontf", "Include non-TF genes", value = FALSE),
+
         selectInput("layout", label='Layout',
                     choices=list(`Force directed`="cose", Tree="dagre"), 
                     selectize=TRUE),

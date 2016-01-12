@@ -8,40 +8,25 @@ library(reshape2)
 library(stringr)
 library(tidyr)
 
-obj.tf_mirna <- synGet("syn5579744")
-d.tf_mirna <- fread(getFileLocation(obj.tf_mirna), data.table=FALSE)
+nodeProperties <- data.frame(group=c("mrna", "nontf_mrna", 
+                                     "mirna", "methyl"),
+                             color=c("#888888", "#008800", "#880000", "#000088"),
+                             shape=c("ellipse", "ellipse", "square", "square"))
 
-diffStates <- d.tf_mirna %>% select(Comparison) %>% 
-  mutate(Comparison=str_replace(Comparison, "_vs_", "_")) %>% 
-  tidyr::separate(Comparison, c("first", "second")) %>% 
-  name_rows() %>% 
-  melt(id.vars=".rownames") %>% 
-  select(value) %>% 
-  distinct()
-diffStates <- diffStates$value
+source("tf_mirna.R")
+source("tf_methyl.R")
+source("nontf_mirna.R")
 
-d2 <- d.tf_mirna
+diffStates <- unique(c(diffStates.tf_mirna, 
+                       diffStates.tf_methyl,
+                       diffStates.nontf_mirna))
 
-nodeProperties <- data.frame(group=c("mrna", "mirna"),
-                             color=c("#888888", "#FF0000"),
-                             shape=c("ellipse", "square"))
+nodeData <- rbind(nodeData.tf_mirna, 
+                  nodeData.tf_methyl,
+                  nodeData.nontf_mirna)
 
-nodeData <- d2 %>%
-  select(mrna, mirna) %>% 
-  name_rows() %>% 
-  melt(id.vars=".rownames", variable.name="group", value.name="name") %>% 
-  select(name, group) %>% 
-  distinct() %>% 
-  mutate(id=name) %>% 
-  left_join(nodeProperties)
-
-edgeData <- d2 %>% 
-  select(mrna, mirna, Comparison, changeFishersZ, fdr) %>%
-  rename(source=mirna, target=mrna)
+edgeData <- rbind(edgeData.tf_mirna, 
+                  edgeData.tf_methyl,
+                  edgeData.nontf_mirna)
 
 network <- edgeData
-
-# network <- createCytoscapeJsNetwork(d.nodes, d.edges)
-# rcytoscapejs(network$nodes, network$edges)
-
-

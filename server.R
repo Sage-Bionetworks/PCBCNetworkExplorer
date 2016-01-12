@@ -28,7 +28,18 @@ shinyServer(function(input, output, session) {
     
     tmp <- filter(edgeData,
                   # str_detect(Comparison, input$diffstate),
-                  Comparison %in% comparisons)
+                  Comparison %in% comparisons,
+                  fdr <= input$fdr)
+    
+    if (!input$nontf) {
+      tmp <- filter(tmp, !(group == "nontf_mirna"))
+    }
+    else {
+      foo <- filter(tmp, !(group == "nontf_mirna"))
+      putback <- filter(tmp, group == "nontf_mirna", 
+                        source %in% foo$source)
+      tmp <- rbind(foo, putback)
+    }
     
     return(tmp)
   })
