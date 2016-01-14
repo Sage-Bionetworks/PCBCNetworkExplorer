@@ -65,7 +65,8 @@ shinyServer(function(input, output, session) {
     })
     
     output$diffstate <- renderUI({
-      selectInput("diffstate", "Differentiation State", choices=diffStates)
+      selectInput("diffstate", label='Differentiation State',
+                  choices=diffStates, selected="SC", selectize=TRUE)
     })
     
     output$comparison <- renderUI({
