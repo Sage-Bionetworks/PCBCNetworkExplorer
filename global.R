@@ -1,6 +1,3 @@
-library(synapseClient)
-synapseLogin()
-
 library(data.table)
 library(plyr)
 library(dplyr)
