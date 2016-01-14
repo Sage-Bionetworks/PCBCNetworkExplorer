@@ -45,10 +45,14 @@ shinyServer(function(input, output, session) {
     return(tmp)
   })
 
-  
   nodeReactive <- reactive({
     net <- networkReactive()
     filter(nodeData, name %in% c(net$source, net$target))
+  })
+  
+  output$diffstate <- renderUI({
+    selectInput("diffstate", label='Differentiation State',
+                choices=diffStates, selected="SC", selectize=TRUE)
   })
   
   output$comparison <- renderUI({
