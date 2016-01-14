@@ -12,6 +12,10 @@ dashboardPage(
   
   dashboardSidebar(disable = TRUE),
   
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "readCookie.css")
+  ),
+  
   dashboardBody(
     fluidRow(
       box(
