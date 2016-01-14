@@ -16,15 +16,13 @@ shinyServer(function(input, output, session) {
   
   networkReactive <- reactive({
     comparison <- input$comparison
-
+    print(comparison)
     if (comparison == "All") {
       comparisons <- comparisonReactive()
     }
     else{
       comparisons <- comparison
     }
-    
-    print(sprintf("Comparisons in netReact = %s", comparisons))
     
     tmp <- filter(edgeData,
                   # str_detect(Comparison, input$diffstate),
@@ -34,13 +32,16 @@ shinyServer(function(input, output, session) {
     if (!input$nontf) {
       tmp <- filter(tmp, !(group == "nontf_mirna"))
     }
-    else {
-      foo <- filter(tmp, !(group == "nontf_mirna"))
-      putback <- filter(tmp, group == "nontf_mirna", 
-                        source %in% foo$source)
-      tmp <- rbind(foo, putback)
+    else if (input$nontf & (comparison != "All"))  {
+      tmp <- tmp
+      # foo <- filter(tmp, !(group == "nontf_mirna"))
+      # putback <- filter(tmp, group == "nontf_mirna", 
+      #                   source %in% foo$source)
+      # tmp <- rbind(foo, putback)
     }
-    
+    else {
+      tmp <- filter(tmp, !(group == "nontf_mirna"))
+    }    
     return(tmp)
   })
 
