@@ -24,8 +24,7 @@ dashboardPage(
         
         h3("Options"),
         
-        selectInput("diffstate", label='Differentiation State',
-                    choices=diffStates, selected="SC", selectize=TRUE),
+        uiOutput("diffstate"),
         
         uiOutput("comparison"),
 

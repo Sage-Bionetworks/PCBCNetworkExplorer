@@ -13,15 +13,19 @@ shinyServer(function(input, output, session) {
 
   session$sendCustomMessage(type="readCookie",
                             message=list(name='org.sagebionetworks.security.user.login.token'))
+
   
   foo <- observeEvent(input$cookie, {
     
     synapseLogin(sessionToken=input$cookie)
     
+    source("load.R")    
+    
     comparisonReactive <- reactive({
       tmp <- filter(edgeData, str_detect(Comparison, input$diffstate))
       return(unique(tmp$Comparison))
     })  
+    
     
     networkReactive <- reactive({
       comparison <- input$comparison
