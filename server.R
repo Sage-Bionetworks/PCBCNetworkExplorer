@@ -9,6 +9,9 @@ library(DT)
 library(rcytoscapejs)
 
 shinyServer(function(input, output, session) {
+  
+  source("load.R")
+  
   comparisonReactive <- reactive({
     tmp <- filter(edgeData, str_detect(Comparison, input$diffstate))
     return(unique(tmp$Comparison))
