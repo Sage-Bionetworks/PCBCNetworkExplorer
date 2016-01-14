@@ -64,6 +64,10 @@ shinyServer(function(input, output, session) {
       filter(nodeData, name %in% c(net$source, net$target))
     })
     
+    output$diffstate <- renderUI({
+      selectInput("diffstate", "Differentiation State", choices=diffStates)
+    })
+    
     output$comparison <- renderUI({
       selectInput("comparison", "Comparison", choices=c("All", comparisonReactive()))
     })
