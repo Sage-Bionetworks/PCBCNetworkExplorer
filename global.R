@@ -1,5 +1,4 @@
 library(synapseClient)
-synapseLogin()
 
 library(data.table)
 library(plyr)
