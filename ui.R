@@ -13,6 +13,13 @@ dashboardPage(
   dashboardSidebar(disable = TRUE),
   
   dashboardBody(
+    
+    tags$head(
+      singleton(
+        includeScript("www/readCookie.js")
+      )
+    ),
+    
     fluidRow(
       box(
         width = 5, status = "info", solidHeader = FALSE,
