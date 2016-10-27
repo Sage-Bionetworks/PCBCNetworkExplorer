@@ -6,11 +6,18 @@
 #
 
 library(shinydashboard)
+library(visNetwork)
 
 dashboardPage(
   dashboardHeader(title = "PCBC Network Explorer"),
   
-  dashboardSidebar(disable = TRUE),
+  dashboardSidebar(  
+    sidebarMenu(
+        uiOutput("diffstate"),
+        uiOutput("feature"),
+        sliderInput("fdr", "FDR", min=0, max=0.05, step=0.005, value=0.05, round=TRUE)
+        )
+  ),
   
   dashboardBody(
     
@@ -21,34 +28,16 @@ dashboardPage(
     ),
     
     fluidRow(
-      box(
-        width = 5, status = "info", solidHeader = FALSE,
-        
-        h3("Options"),
-        
-        uiOutput("diffstate"),
-        
-        uiOutput("comparison"),
-
-        conditionalPanel("input.comparison != 'All'",
-                         checkboxInput("nontf", "Include non-TF genes", value = FALSE)),
-        
-        sliderInput("fdr", "FDR", min=0, max=0.05, step=0.005, value=0.05, round=TRUE),
-        
-        selectInput("layout", label='Layout',
-                    choices=list(`Force directed`="cose", Tree="dagre"), 
-                    selectize=TRUE),
-        
-        tags$hr(),
-        
-        h3("Edges"),
-        
-        DT::dataTableOutput("edgeDataTable")
-      ),
-      box(width=7,
+      box(width=8,
           status = "info", solidHeader = TRUE,
           title = "Network",
-          rcytoscapejs::rcytoscapejsOutput("plot", height="500px")
+          visNetworkOutput("plot", height="500px")
+      ),
+      box(width=8,
+          DT::dataTableOutput("edgeDataTable")
+      ),
+      box(width=8,
+          DT::dataTableOutput("nodeDataTable")
       )
     )
   )

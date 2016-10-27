@@ -6,91 +6,70 @@
 #
 
 library(DT)
-library(rcytoscapejs)
+library(visNetwork)
 
 shinyServer(function(input, output, session) {
   
   session$sendCustomMessage(type="readCookie",
                             message=list(name='org.sagebionetworks.security.user.login.token'))
-  
+
   foo <- observeEvent(input$cookie, {
-    
-    synapseClient::synapseLogin(sessionToken=input$cookie)
+
+  synapseClient::synapseLogin(sessionToken=input$cookie)
     
     source("load.R")
     
-    comparisonReactive <- reactive({
-      tmp <- filter(edgeData, str_detect(Comparison, input$diffstate))
-      return(unique(tmp$Comparison))
-    })  
-    
-    networkReactive <- reactive({
-      comparison <- input$comparison
-      print(comparison)
-      if (comparison == "All") {
-        comparisons <- comparisonReactive()
-      }
-      else{
-        comparisons <- comparison
-      }
+    network <- reactive({
       
-      tmp <- filter(edgeData,
-                    # str_detect(Comparison, input$diffstate),
-                    Comparison %in% comparisons,
-                    fdr <= input$fdr)
+      net <- all.networks[[input$diffstate]]
+
+      edges <- net$edge %>% select(from=feature, to=target, coexpression) %>% 
+        filter(from %in% input$feature | to %in% input$feature) %>% 
+        filter(to != "NONE", from != "NONE")
+
+      nodes <- net$node %>%
+        filter(feature %in% edges$from | feature %in% edges$to,
+               feature != "NONE") %>% 
+        mutate(id=feature, label=feature) %>% 
+        left_join(assayShapes)
       
-      if (!input$nontf) {
-        tmp <- filter(tmp, !(group == "nontf_mirna"))
-      }
-      else if (input$nontf & (comparison != "All"))  {
-        tmp <- tmp
-        # foo <- filter(tmp, !(group == "nontf_mirna"))
-        # putback <- filter(tmp, group == "nontf_mirna", 
-        #                   source %in% foo$source)
-        # tmp <- rbind(foo, putback)
-      }
-      else {
-        tmp <- filter(tmp, !(group == "nontf_mirna"))
-      }    
-      return(tmp)
+      list(edges=edges, nodes=nodes)
     })
     
-    nodeReactive <- reactive({
-      net <- networkReactive()
-      filter(nodeData, name %in% c(net$source, net$target))
-    })
-    
+
     output$diffstate <- renderUI({
       selectInput("diffstate", label='Differentiation State',
-                  choices=diffStates, selected="SC", selectize=TRUE)
+                  choices=names(all.networks), selected="DE", selectize=TRUE)
     })
     
-    output$comparison <- renderUI({
-      selectInput("comparison", "Comparison", choices=c("All", comparisonReactive()))
+    output$feature <- renderUI({
+      selectInput("feature", label='Feature',
+                  choices=all.networks[[input$diffstate]]$node$feature, 
+                  selectize=TRUE, multiple = TRUE)
     })
+    
     
     output$edgeDataTable <- DT::renderDataTable({
-      net <- networkReactive()
+      network <- network()
       
-      if (!is.null(input$connectedNodes)) {
-        net <- filter(net,
-                      source %in% input$connectedNodes | target %in% input$connectedNodes)
-      }
+      DT::datatable(network$edges,
+                    style='bootstrap', options=list(dom = 'tp', pageLength=5))
+    })
+
+    output$nodeDataTable <- DT::renderDataTable({
+      network <- network()
       
-      DT::datatable(net,
+      DT::datatable(network$nodes %>% select(-id, -label, -enrich.fdr, -enrich.score, -shape),
                     style='bootstrap', options=list(dom = 'tp', pageLength=5))
     })
     
-    output$plot <- renderRcytoscapejs({
+    output$plot <- renderVisNetwork({
+      network <- network()
       
-      edges <- networkReactive()
-      nodes <- nodeReactive()
+      edges <- network$edges
+      nodes <- network$nodes
       
-      network <- createCytoscapeJsNetwork(nodes, edges)
-      
-      rcytoscapejs(network$nodes, network$edges, layout=input$layout, 
-                   height='600px', highlightConnectedNodes=TRUE,
-                   boxSelectionEnabled=TRUE)
+      visNetwork(nodes=nodes, edges=edges) %>% visEdges(arrows='to')
     })
     
   })
