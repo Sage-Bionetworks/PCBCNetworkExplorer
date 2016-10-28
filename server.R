@@ -20,12 +20,16 @@ shinyServer(function(input, output, session) {
     source("load.R")
     
     network <- reactive({
+      input$refresh
       
+      coexpr <- isolate(input$coexpression)
       net <- all.networks[[input$diffstate]]
 
-      edges <- net$edge %>% select(from=feature, to=target, coexpression) %>% 
-        filter(from %in% input$feature | to %in% input$feature) %>% 
-        filter(to != "NONE", from != "NONE")
+      edges <- net$edge %>% 
+        select(from=feature, to=target, coexpression) %>% 
+        filter(from %in% input$feature | to %in% input$feature,
+               to != "NONE", from != "NONE",
+               between(coexpression, coexpr[1], coexpr[2]))
 
       nodes <- net$node %>%
         filter(feature %in% edges$from | feature %in% edges$to,
