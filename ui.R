@@ -15,7 +15,8 @@ dashboardPage(
     sidebarMenu(
         uiOutput("diffstate"),
         uiOutput("feature"),
-        sliderInput("fdr", "FDR", min=0, max=0.05, step=0.005, value=0.05, round=TRUE)
+        sliderInput("coexpression", "Coexpression", min=-1, max=1, step=0.01, value=c(-1, 1), round=TRUE),
+        actionButton("refresh", "Refresh")
         )
   ),
   
